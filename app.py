@@ -1,25 +1,10 @@
-#!/usr/bin/env python3
-"""
-Challenge 8 — Multi-Step Chain Challenge
-Vulnerability chain: JWT None-Algorithm Bypass -> SSRF via Internal Report Endpoint
-
-Step 1: The /auth endpoint issues a JWT. Players must forge a JWT with role=admin
-        using the "none" algorithm attack.
-
-Step 2: With admin JWT, /api/report?source=<url> is accessible.
-        The source parameter fetches content from a URL — SSRF.
-        The internal flag endpoint is http://127.0.0.1:5001/internal/secret
-        (served on a second internal Flask thread on port 5001)
-"""
-
-import base64, json, hashlib, hmac, threading
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import urllib.request
 import urllib.error
+import base64, json, hashlib, hmac, threading, os
 
 app = Flask(__name__)
 internal_app = Flask("internal")
-
 FLAG = open("flag.txt").read().strip()
 
 # ---- JWT Helpers ----
@@ -73,21 +58,7 @@ def verify_jwt(token: str):
 
 @app.route("/")
 def index():
-    return """
-    <html><head><title>NullGrids Chain Challenge</title></head>
-    <body style='font-family:monospace;background:#000;color:#ff0044;padding:40px'>
-    <h1>NullGrids Internal Report Portal</h1>
-    <p style='color:#aaa'>Authentication: JWT-based | Authorization: role-based</p>
-    <br>
-    <p>Endpoints:</p>
-    <ul>
-      <li>POST /auth — get JWT token: {"username":"employee","password":"ng2026"}</li>
-      <li>GET /api/report?source=URL — admin only: fetch a report from URL</li>
-      <li>GET /api/me — show your decoded JWT claims</li>
-    </ul>
-    <p style='color:#444;font-size:12px'>NullGrids v2026.3 | Internal Use Only</p>
-    </body></html>
-    """
+    return render_template("index.html")
 
 VALID_CREDS = {
     "employee": "ng2026",
